@@ -19,6 +19,9 @@ parameter DATA_WIDTH = 32;
     wire data_out_valid;
     reg data_out_ack;
 
+    reg [32-1:0] CheckData[64-1:0]; 
+    reg [6-1:0] index;
+ 
 fifo dut(.rst_in_n(rst_in_n),
          .clock_in(clock_in),
          .data_in(data_in),
@@ -38,26 +41,27 @@ initial begin // data in
     #5;
     clock_in = 1'b1;
     rst_in_n = 1'b1;
-    repeat (16)
-        begin
-            #5;
-            clock_in = ~clock_in;
-            data_in = (data_in) * 2;
-        end
+    repeat (16) begin
+        #5;
+        clock_in = ~clock_in;
+        data_in = (data_in) * 2;
+        data_in_valid = 1'b1;
+    end
 end
 
 initial begin // data out
     clock_out = 1'b0;
     rst_out_n = 1'b0;
     data_in = 32'h00000001;
-    #5;
+    #15;
     clock_out = 1'b1;
     rst_out_n = 1'b1;
-    repeat (16)
-        begin
-            #5;
-            clock_out = ~clock_out;
-        end
+    repeat (16) begin
+        #5;
+        clock_out = ~clock_out;
+        //data_out_valid = 1'b1;
+        data_out_ack = 1'b1;
+    end
 end
 
 
