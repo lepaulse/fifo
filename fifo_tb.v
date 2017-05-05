@@ -2,7 +2,7 @@
 `timescale 1ns/1ps
 
 module fifo_tb;
-parameter BUFFER_SIZE = 127;
+parameter BUFFER_SIZE = 128;
 parameter DATA_WIDTH = 32;
 
     // Data in interface
@@ -37,32 +37,34 @@ fifo dut(.rst_in_n(rst_in_n),
 initial begin // data in
     clock_in = 1'b0;
     rst_in_n = 1'b0;
+    data_in_valid = 1'b0;
     data_in = 32'h00000001;
     #5;
     clock_in = 1'b1;
     rst_in_n = 1'b1;
+    data_in_valid = 1'b1;   
     repeat (16) begin
         #5;
         clock_in = ~clock_in;
-        data_in = (data_in) * 2;
-        data_in_valid = 1'b1;
+        if(!clock_in) // change data on negedge
+            data_in = (data_in) * 2;
     end
 end
 
-initial begin // data out
-    clock_out = 1'b0;
-    rst_out_n = 1'b0;
-    data_in = 32'h00000001;
-    #15;
-    clock_out = 1'b1;
-    rst_out_n = 1'b1;
-    repeat (16) begin
-        #5;
-        clock_out = ~clock_out;
-        //data_out_valid = 1'b1;
-        data_out_ack = 1'b1;
-    end
-end
+// initial begin // data out
+//     clock_out = 1'b0;
+//     rst_out_n = 1'b0;
+//     data_in = 32'h00000001;
+//     #15;
+//     clock_out = 1'b1;
+//     rst_out_n = 1'b1;
+//     repeat (16) begin
+//         #5;
+//         clock_out = ~clock_out;
+//         //data_out_valid = 1'b1;
+//         data_out_ack = 1'b1;
+//     end
+// end
 
 
 endmodule

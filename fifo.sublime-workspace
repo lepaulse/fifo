@@ -4,6 +4,34 @@
 		"selected_items":
 		[
 			[
+				"da",
+				"data_out_ack"
+			],
+			[
+				"data",
+				"data_out_valid"
+			],
+			[
+				"D",
+				"DATA_WIDTH"
+			],
+			[
+				"cl",
+				"clock_out"
+			],
+			[
+				"rst",
+				"rst_out_n"
+			],
+			[
+				"clo",
+				"clock_in"
+			],
+			[
+				"r",
+				"rst_in_n"
+			],
+			[
 				"Da",
 				"DataOut"
 			],
@@ -35,7 +63,7 @@
 			"file": "fifo_tb.v",
 			"settings":
 			{
-				"buffer_size": 49,
+				"buffer_size": 1384,
 				"encoding": "UTF-8",
 				"line_ending": "Windows"
 			}
@@ -50,13 +78,13 @@
 			}
 		},
 		{
-			"contents": "module fifo;\nparameter buffer_size = 127;\n'include \ninput wire rst_in_n;\ninput wire clock_in;\ninput  data__in\n\nendmodule",
+			"contents": "module fifo #(parameter \n                BUFFER_SIZE = 128, // From 1 to 127 values  \n                DATA_WIDTH = 32,\n                ADRESS_WIDTH = 7;\n             )\n    (\n    // Data in interface\n    input wire rst_in_n,\n    input wire clock_in,\n    input wire [DATA_WIDTH-1:0] data_in,\n    input wire data_in_valid,\n    output reg data_in_full,\n\n    // Data out interface\n    input wire rst_out_n,\n    input wire clock_out,\n    output reg [DATA_WIDTH-1:0] data_out,\n    output reg data_out_valid,\n    input wire data_out_ack\n    );\n\n    reg [DATA_WIDTH-1:0] Buffer[BUFFER_SIZE-1:0];\n    wire [ReadAdress\n\n    // Data in logic\n    always @(posedge clock_in or negedge rst_in_n) begin\n        if (rst_in_n) begin\n            // reset\n            \n        end\n        else if (data_in_valid) begin\n            \n        end\n    end\n\n    // Data out logic\n    always @(posedge clock_out or negedge rst_out_n) begin\n        if (rst_out_n) begin\n            // reset\n            \n        end\n        else if (data_out_valid) begin\n            \n        end\n    end\n\nendmodule",
 			"file": "fifo.v",
-			"file_size": 25,
-			"file_write_time": 131382833685336488,
+			"file_size": 1115,
+			"file_write_time": 131384470030696063,
 			"settings":
 			{
-				"buffer_size": 120,
+				"buffer_size": 1071,
 				"encoding": "UTF-8",
 				"line_ending": "Windows"
 			}
@@ -159,6 +187,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"DataWidth",
 			"DataLength ",
 			"CoeffWidth",
 			"Coef",
@@ -176,6 +205,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"DATA_WIDTH",
 			"DataOutLength",
 			"InputWidth",
 			"Bypass",
@@ -191,7 +221,7 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
@@ -200,15 +230,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 49,
+						"buffer_size": 1384,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								12,
-								12
+								445,
+								445
 							]
 						],
 						"settings":
@@ -219,7 +249,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -247,7 +277,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -262,15 +292,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 120,
+						"buffer_size": 1071,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								120,
-								120
+								85,
+								85
 							]
 						],
 						"settings":
@@ -281,7 +311,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -337,7 +367,7 @@
 	"project": "",
 	"replace":
 	{
-		"height": 48.0
+		"height": 62.0
 	},
 	"save_all_on_build": true,
 	"select_file":
