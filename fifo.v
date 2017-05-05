@@ -10,11 +10,11 @@
 // ********************************************************************************
 // TODO LIST:    
 // ********************************************************************************
-//             
+// No almost full or empty logic implemented            
 // ********************************************************************************
 
 module fifo #(parameter 
-                BUFFER_SIZE = 16, //Integers in range 1 to 128(divisible by 2)  
+                BUFFER_SIZE = 16, //Integers in range 8 to 128(divisible by 2)  
                 DATA_WIDTH = 32,
                 ADDRESS_WIDTH = clogb2(BUFFER_SIZE) - 1
              )
@@ -66,28 +66,28 @@ module fifo #(parameter
     // Conditional sampling of data_in
     always @(posedge clock_in) begin
         if (data_in_valid && !data_in_full)
-            Buffer[BWriteAddress] <= data_in;
+            Buffer[BufferWriteAddress] <= data_in;
     end
 
     // data_out must only be sampled when data_out_valid is asserted.
-    assign data_out = Buffer[BReadAddress];
+    assign data_out = Buffer[BufferReadAddress];
 
 
 
 
 
 
-    wire [ADDRESS_WIDTH-1:0] BWriteAddress, BReadAddress;         // Binary memory address 
+    wire [ADDRESS_WIDTH-1:0] BufferWriteAddress, BufferReadAddress;         // Binary memory address 
 
     // MSB used for checking fifo full condition
-    reg [ADDRESS_WIDTH:0] WriteAddress, ReadAddress;         // Binary memory next address 
+    reg [ADDRESS_WIDTH:0] ExtendedBufferWriteAddress, ExtendedBufferReadAddress;         // Binary memory next address 
     wire [ADDRESS_WIDTH:0] WriteNextAddress, ReadNextAddress;         // Binary memory next address 
     wire [ADDRESS_WIDTH:0] WriteGrayNextPointer, ReadGrayNextPointer;
     reg [ADDRESS_WIDTH:0] WritePointer, ReadPointer;            /* Gray coded Pointers for 
                                                                    syncronizing across clock 
                                                                    domains */
     reg [ADDRESS_WIDTH:0] WritePointer2Read1, ReadPointer2Write1; // 
-    reg [ADDRESS_WIDTH:0] WritePointer2Read2, ReadPointer2Write2; // 
+    //reg [ADDRESS_WIDTH:0] WritePointer2Read2, ReadPointer2Write2; // 
 
 
     wire DataInFull;
@@ -100,11 +100,11 @@ module fifo #(parameter
     always @(posedge clock_out or negedge rst_out_n) begin
         if (!rst_out_n) begin
             ReadPointer2Write1 <= 0;
-            ReadPointer2Write2 <= 0;
+            //ReadPointer2Write2 <= 0;
         end
         else begin
             ReadPointer2Write1 <= ReadPointer;
-            ReadPointer2Write2 <= ReadPointer2Write1;
+            //ReadPointer2Write2 <= ReadPointer2Write1;
         end
     end
 
@@ -112,11 +112,11 @@ module fifo #(parameter
     always @(posedge clock_in or negedge rst_in_n) begin
         if (!rst_in_n) begin
             WritePointer2Read1 <= 0;
-            WritePointer2Read2 <= 0;
+            //WritePointer2Read2 <= 0;
         end
         else begin
             WritePointer2Read1 <= WritePointer;
-            WritePointer2Read2 <= WritePointer2Read1;
+            //WritePointer2Read2 <= WritePointer2Read1;
         end
     end
 
@@ -125,23 +125,23 @@ module fifo #(parameter
     // Update Write adress to 
     always @(posedge clock_in or negedge rst_in_n) begin
         if (!rst_in_n) begin
-            WriteAddress <= 0;
+            ExtendedBufferWriteAddress <= 0;
             WritePointer <= 0;
         end
         else begin
-            WriteAddress <= WriteNextAddress;
+            ExtendedBufferWriteAddress <= WriteNextAddress;
             WritePointer <= WriteGrayNextPointer;
         end
     end
 
     // Address memory and check empty
-    assign BWriteAddress = WriteAddress[ADDRESS_WIDTH-1:0];
+    assign BufferWriteAddress = ExtendedBufferWriteAddress[ADDRESS_WIDTH-1:0];
     // NextAddress
-    assign WriteNextAddress = WriteAddress + (data_in_valid & ~data_in_full);
+    assign WriteNextAddress = ExtendedBufferWriteAddress + (data_in_valid & ~data_in_full);
     // Binary to Gray code conversion
     assign WriteGrayNextPointer = (WriteNextAddress>>1) ^ WriteNextAddress;
     // Check full condition
-    assign DataInFull = (WriteGrayNextPointer=={~ReadPointer2Write2[ADDRESS_WIDTH:ADDRESS_WIDTH-1],ReadPointer2Write2[ADDRESS_WIDTH-2:0]});
+    assign DataInFull = (WriteGrayNextPointer=={~ReadPointer2Write1[ADDRESS_WIDTH:ADDRESS_WIDTH-1],ReadPointer2Write1[ADDRESS_WIDTH-2:0]});
     always @(posedge clock_in or negedge rst_in_n) begin
         if (!rst_in_n) begin
             data_in_full <= 1'b0;
@@ -154,23 +154,23 @@ module fifo #(parameter
         // Update Read adress to 
     always @(posedge clock_out or negedge rst_out_n) begin
         if (!rst_out_n) begin
-            ReadAddress <= 0;
+            ExtendedBufferReadAddress <= 0;
             ReadPointer <= 0;
         end
         else begin
-            ReadAddress <= ReadNextAddress;
+            ExtendedBufferReadAddress <= ReadNextAddress;
             ReadPointer <= ReadGrayNextPointer;
         end
     end
 
     // Address memory and check empty
-    assign BReadAddress = ReadAddress[ADDRESS_WIDTH-1:0];
+    assign BufferReadAddress = ExtendedBufferReadAddress[ADDRESS_WIDTH-1:0];
     // NextAddress
-    assign ReadNextAddress = ReadAddress + (data_out_ack & data_out_valid);
+    assign ReadNextAddress = ExtendedBufferReadAddress + (data_out_ack & data_out_valid);
     // Binary to Gray code conversion
     assign ReadGrayNextPointer = (ReadNextAddress>>1) ^ ReadNextAddress;
     // Check full condition
-    assign DataOutEmpty = (ReadGrayNextPointer==WritePointer2Read2);
+    assign DataOutEmpty = (ReadGrayNextPointer==WritePointer2Read1);
     always @(posedge clock_out or negedge rst_out_n) begin
         if (!rst_out_n) begin
             data_out_valid <= 1'b0;
