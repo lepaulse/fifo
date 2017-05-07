@@ -1,37 +1,35 @@
-`timescale 1ns/1ps
-
-// ********************************************************************************
+// **************************************************************************************
 // Asynchronous fifo    
 // TODO: last edit date                 
 // Norwegian University of Science and Technology              
 // Lars Erik Songe Paulsen             
-// ********************************************************************************
+// **************************************************************************************
 
-// ********************************************************************************
+// **************************************************************************************
 // TODO LIST:    
-// ********************************************************************************
-// No almost full or empty logic implemented            
-// ********************************************************************************
+// **************************************************************************************
+// No "almost full" or "almost empty" signaling logic implemented            
+// **************************************************************************************
+`timescale 1ns/1ps
 
 module fifo #(parameter 
-                BUFFER_SIZE = 16, //Integers in range 8 to 128(divisible by 2)  
-                DATA_WIDTH = 32,
+                BUFFER_SIZE = 16,                
+                DATA_WIDTH = 32,    
                 ADDRESS_WIDTH = clogb2(BUFFER_SIZE) - 1
              )
     (
-
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
     // Data in interface
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
     input wire rst_in_n,
     input wire clock_in,
     input wire [DATA_WIDTH-1:0] data_in,
     input wire data_in_valid,
     output reg data_in_full,
 
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
     // Data out interface
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
     input wire rst_out_n,
     input wire clock_out,
     output wire [DATA_WIDTH-1:0] data_out,
@@ -39,27 +37,28 @@ module fifo #(parameter
     input wire data_out_ack
     );
 
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
     // Functions
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
+    // ceil log_2
     function integer clogb2;
         input integer depth;
               for (clogb2=0; depth>0; clogb2=clogb2+1)
                     depth = depth >> 1;
     endfunction
 
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
     // Memory interface
     // Low latency version(no output register)
     // See XilinxSimpleDualPort1ClockBlockRamExample.v for detailed documentation
-    // ---------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------
     reg [DATA_WIDTH-1:0] Buffer[BUFFER_SIZE-1:0];
 
     // Initialize memory values to all zeros
     generate 
         integer ram_index;
         initial
-            for (ram_index = 0; ram_index < BUFFER_SIZE; ram_index = ram_index + 1)
+            for(ram_index = 0; ram_index < BUFFER_SIZE; ram_index = ram_index + 1)
                 Buffer[ram_index] = {DATA_WIDTH{1'b0}};
     endgenerate
 
@@ -69,117 +68,92 @@ module fifo #(parameter
             Buffer[BufferWriteAddress] <= data_in;
     end
 
-    // data_out must only be sampled when data_out_valid is asserted.
+    // data_out must only be sampled when data_out_valid is asserted
     assign data_out = Buffer[BufferReadAddress];
 
-
-
-
-
-
-    wire [ADDRESS_WIDTH-1:0] BufferWriteAddress, BufferReadAddress;         // Binary memory address 
-
     // MSB used for checking fifo full condition
-    reg [ADDRESS_WIDTH:0] ExtendedBufferWriteAddress, ExtendedBufferReadAddress;         // Binary memory next address 
-    wire [ADDRESS_WIDTH:0] WriteNextAddress, ReadNextAddress;         // Binary memory next address 
+    // Remainder is actuall Buffer address
+    reg [ADDRESS_WIDTH:0] ExtendedBufferWriteAddress, ExtendedBufferReadAddress; 
+
+    // Used for addressing memory
+    wire [ADDRESS_WIDTH-1:0] BufferWriteAddress, BufferReadAddress;       
+
+    // Binary coded (ADDRESS_WIDTH) bit memory next address
+    wire [ADDRESS_WIDTH:0] WriteNextAddress, ReadNextAddress; 
+
+    // Gray coded Pointers for generating full/empty signals
+    reg [ADDRESS_WIDTH:0] WritePointer, ReadPointer;
+
+    // Gray coded Next Pointers for syncronizing across clock domains
     wire [ADDRESS_WIDTH:0] WriteGrayNextPointer, ReadGrayNextPointer;
-    reg [ADDRESS_WIDTH:0] WritePointer, ReadPointer;            /* Gray coded Pointers for 
-                                                                   syncronizing across clock 
-                                                                   domains */
-    reg [ADDRESS_WIDTH:0] WritePointer2Read1, ReadPointer2Write1; // 
-    //reg [ADDRESS_WIDTH:0] WritePointer2Read2, ReadPointer2Write2; // 
 
+    // Gray coded pointers for synchronizing accross clock domains
+    reg [ADDRESS_WIDTH:0] WritePointer2Read1, ReadPointer2Write1;
 
-    wire DataInFull;
-    wire DataOutEmpty;
-    //assign data_in_full = DataInFull;
+    // 
+    wire DataInFull, DataOutEmpty;
 
-
-
-    // Sync Read to Write
-    always @(posedge clock_out or negedge rst_out_n) begin
-        if (!rst_out_n) begin
-            ReadPointer2Write1 <= 0;
-            //ReadPointer2Write2 <= 0;
-        end
-        else begin
-            ReadPointer2Write1 <= ReadPointer;
-            //ReadPointer2Write2 <= ReadPointer2Write1;
-        end
-    end
-
-    // Sync Write to Read
-    always @(posedge clock_in or negedge rst_in_n) begin
-        if (!rst_in_n) begin
-            WritePointer2Read1 <= 0;
-            //WritePointer2Read2 <= 0;
-        end
-        else begin
-            WritePointer2Read1 <= WritePointer;
-            //WritePointer2Read2 <= WritePointer2Read1;
-        end
-    end
-
-
-
-    // Update Write adress to 
-    always @(posedge clock_in or negedge rst_in_n) begin
-        if (!rst_in_n) begin
-            ExtendedBufferWriteAddress <= 0;
-            WritePointer <= 0;
-        end
-        else begin
-            ExtendedBufferWriteAddress <= WriteNextAddress;
-            WritePointer <= WriteGrayNextPointer;
-        end
-    end
-
-    // Address memory and check empty
+    // ----------------------------------------------------------------------------------
+    // Write side logic
+    // ----------------------------------------------------------------------------------
+    // Check full condition
+    assign DataInFull = (WriteGrayNextPointer ==
+                        {~ReadPointer2Write1[ADDRESS_WIDTH:ADDRESS_WIDTH-1]
+                         ,ReadPointer2Write1[ADDRESS_WIDTH-2:0]});
+    // Remove MSB before memory indexing
     assign BufferWriteAddress = ExtendedBufferWriteAddress[ADDRESS_WIDTH-1:0];
-    // NextAddress
+    // Increase Write address if conditions are met
     assign WriteNextAddress = ExtendedBufferWriteAddress + (data_in_valid & ~data_in_full);
     // Binary to Gray code conversion
     assign WriteGrayNextPointer = (WriteNextAddress>>1) ^ WriteNextAddress;
-    // Check full condition
-    assign DataInFull = (WriteGrayNextPointer=={~ReadPointer2Write1[ADDRESS_WIDTH:ADDRESS_WIDTH-1],ReadPointer2Write1[ADDRESS_WIDTH-2:0]});
+
     always @(posedge clock_in or negedge rst_in_n) begin
         if (!rst_in_n) begin
             data_in_full <= 1'b0;
+            ExtendedBufferWriteAddress <= 0;
+            WritePointer <= 0;
+            WritePointer2Read1 <= 0;
         end
         else begin
+            // Update data in full register
             data_in_full <= DataInFull;
+            // Update Write adress register
+            ExtendedBufferWriteAddress <= WriteNextAddress;
+            // Update current Gray code writepointer
+            WritePointer <= WriteGrayNextPointer;
+            // Send previous Gray code writepointer to Read side logic
+            WritePointer2Read1 <= WritePointer;
         end
     end
 
-        // Update Read adress to 
-    always @(posedge clock_out or negedge rst_out_n) begin
-        if (!rst_out_n) begin
-            ExtendedBufferReadAddress <= 0;
-            ReadPointer <= 0;
-        end
-        else begin
-            ExtendedBufferReadAddress <= ReadNextAddress;
-            ReadPointer <= ReadGrayNextPointer;
-        end
-    end
-
-    // Address memory and check empty
+    // ----------------------------------------------------------------------------------
+    // Read side logic
+    // ----------------------------------------------------------------------------------
+    // Check empty condition
+    assign DataOutEmpty = (ReadGrayNextPointer==WritePointer2Read1);
+    // Remove MSB before memory indexing
     assign BufferReadAddress = ExtendedBufferReadAddress[ADDRESS_WIDTH-1:0];
-    // NextAddress
+    // Increase Read address if conditions are met
     assign ReadNextAddress = ExtendedBufferReadAddress + (data_out_ack & data_out_valid);
     // Binary to Gray code conversion
     assign ReadGrayNextPointer = (ReadNextAddress>>1) ^ ReadNextAddress;
-    // Check full condition
-    assign DataOutEmpty = (ReadGrayNextPointer==WritePointer2Read1);
+
     always @(posedge clock_out or negedge rst_out_n) begin
         if (!rst_out_n) begin
             data_out_valid <= 1'b0;
+            ExtendedBufferReadAddress <= 0;
+            ReadPointer <= 0;
+            ReadPointer2Write1 <= 0;
         end
         else begin
+            // Update data out valid register
             data_out_valid <= !DataOutEmpty;
+            // Update Read adress register
+            ExtendedBufferReadAddress <= ReadNextAddress;
+            // Update current Gray code readpointer
+            ReadPointer <= ReadGrayNextPointer;
+            // Send previous Gray code readpointer to Write side logic
+            ReadPointer2Write1 <= ReadPointer;
         end
     end
-
-
-
 endmodule
