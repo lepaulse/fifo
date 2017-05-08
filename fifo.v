@@ -13,7 +13,7 @@
 `timescale 1ns/1ps
 
 module fifo #(parameter 
-                BUFFER_SIZE = 16,                
+                BUFFER_SIZE = 1048576,                
                 DATA_WIDTH = 32,    
                 ADDRESS_WIDTH = clogb2(BUFFER_SIZE) - 1
              )
@@ -52,6 +52,11 @@ module fifo #(parameter
     // Low latency version(no output register)
     // See XilinxSimpleDualPort1ClockBlockRamExample.v for detailed documentation
     // ----------------------------------------------------------------------------------
+    /* FROM VHDL EXAMPLE:
+    -- Note :
+    -- If the chosen width and depth values are low, Synthesis will infer Distributed RAM.
+    -- C_RAM_DEPTH should be a power of 2
+    TODO: Check if applicable for verilog version*/ 
     reg [DATA_WIDTH-1:0] Buffer[BUFFER_SIZE-1:0];
 
     // Initialize memory values to all zeros
