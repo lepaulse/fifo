@@ -13,7 +13,7 @@
 `timescale 1ns/1ps
 
 module fifo #(parameter 
-                BUFFER_SIZE = 4,                
+                BUFFER_SIZE = 128,                
                 DATA_WIDTH = 32,    
                 ADDRESS_WIDTH = clogb2(BUFFER_SIZE) - 1
              )
@@ -21,20 +21,20 @@ module fifo #(parameter
     // ----------------------------------------------------------------------------------
     // Data in interface
     // ----------------------------------------------------------------------------------
-    input wire rst_in_n,
-    input wire clock_in,
-    input wire [DATA_WIDTH-1:0] data_in,
-    input wire data_in_valid,
+    input  wire rst_in_n,
+    input  wire clock_in,
+    input  wire [DATA_WIDTH-1:0] data_in,
+    input  wire data_in_valid,
     output reg data_in_full,
 
     // ----------------------------------------------------------------------------------
     // Data out interface
     // ----------------------------------------------------------------------------------
-    input wire rst_out_n,
-    input wire clock_out,
+    input  wire rst_out_n,
+    input  wire clock_out,
     output wire [DATA_WIDTH-1:0] data_out,
     output reg data_out_valid,
-    input wire data_out_ack
+    input  wire data_out_ack
     );
 
     // ----------------------------------------------------------------------------------
@@ -88,7 +88,9 @@ module fifo #(parameter
     wire [ADDRESS_WIDTH:0] WriteGrayNextPointer, ReadGrayNextPointer;
 
     // Gray coded pointers for synchronizing accross clock domains
+    // 2 registers used to avoid metastability
     reg [ADDRESS_WIDTH:0] WritePointer2Read1, ReadPointer2Write1;
+    reg [ADDRESS_WIDTH:0] WritePointer2Read2, ReadPointer2Write2;
 
     // Wires to signal fifo status
     wire DataInFull, DataOutEmpty;
@@ -98,8 +100,8 @@ module fifo #(parameter
     // ----------------------------------------------------------------------------------
     // Check full condition
     assign DataInFull = (WriteGrayNextPointer ==
-                        {~ReadPointer2Write1[ADDRESS_WIDTH:ADDRESS_WIDTH-1]
-                         ,ReadPointer2Write1[ADDRESS_WIDTH-2:0]});
+                        {~ReadPointer2Write2[ADDRESS_WIDTH:ADDRESS_WIDTH-1]
+                         ,ReadPointer2Write2[ADDRESS_WIDTH-2:0]});
     // Remove MSB before memory indexing
     assign BufferWriteAddress = ExtendedBufferWriteAddress[ADDRESS_WIDTH-1:0];
     // Increase Write address if conditions are met
@@ -113,6 +115,7 @@ module fifo #(parameter
             ExtendedBufferWriteAddress <= 0;
             WritePointer <= 0;
             WritePointer2Read1 <= 0;
+            WritePointer2Read2 <= 0;
         end
         else begin
             // Update data in full register
@@ -123,6 +126,7 @@ module fifo #(parameter
             WritePointer <= WriteGrayNextPointer;
             // Send previous Gray code writepointer to Read side logic
             WritePointer2Read1 <= WritePointer;
+            WritePointer2Read2 <= WritePointer2Read1;
         end
     end
 
@@ -130,7 +134,7 @@ module fifo #(parameter
     // Read side logic
     // ----------------------------------------------------------------------------------
     // Check empty condition
-    assign DataOutEmpty = (ReadGrayNextPointer==WritePointer2Read1);
+    assign DataOutEmpty = (ReadGrayNextPointer==WritePointer2Read2);
     // Remove MSB before memory indexing
     assign BufferReadAddress = ExtendedBufferReadAddress[ADDRESS_WIDTH-1:0];
     // Increase Read address if conditions are met
@@ -144,6 +148,7 @@ module fifo #(parameter
             ExtendedBufferReadAddress <= 0;
             ReadPointer <= 0;
             ReadPointer2Write1 <= 0;
+            ReadPointer2Write2 <= 0;
         end
         else begin
             // Update data out valid register
@@ -154,6 +159,7 @@ module fifo #(parameter
             ReadPointer <= ReadGrayNextPointer;
             // Send previous Gray code readpointer to Write side logic
             ReadPointer2Write1 <= ReadPointer;
+            ReadPointer2Write2 <= ReadPointer2Write1;
         end
     end
 endmodule

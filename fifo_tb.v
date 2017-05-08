@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 module fifo_tb;
-parameter BUFFER_SIZE = 4;//128;
+parameter BUFFER_SIZE = 128;//128;
 parameter DATA_WIDTH = 32;
 
     // Data in interface
@@ -30,38 +30,80 @@ fifo dut(.rst_in_n(rst_in_n),
          .data_out_ack(data_out_ack)
         );
 
-reg [31:0] COMPARE[0:255]; 
+reg [31:0] COMPARE[0:65536]; 
 reg [7:0] in_index, out_index;
 
 initial begin // data in
     in_index = 8'b00000000;
     clock_in = 1'b0;
     rst_in_n = 1'b0;
-    data_in_valid = 1'b0;
-    data_in = 32'h00000000;
+    data_in_valid = 1'b1;
+    data_in = 32'h00000001;
     #5;
-    //clock_in = 1'b1;
+    clock_in = 1'b1;
     rst_in_n = 1'b1;
-    data_in_valid = 1'b1;   
-    //#5;
-    repeat (100) begin
+    //data_in_valid = 1'b1;   
+    #5;
+    repeat (20) begin
         if(!data_in_full) begin
             if(clock_in) begin // change data on negedge
-                // if(data_in != 0) begin
+                if(data_in != 0) begin
                     data_in = (data_in) + 1;
-                    COMPARE[in_index] <= (data_in);
-                    in_index <= in_index + 1;  
-                // end
-                // else begin
-                //     data_in <= 1'b1;
-                //     COMPARE[in_index] <= 32'h00000001;
-                // end
+                end
+                else begin
+                    data_in <= 1'b1;
+                end
             end
             else begin  
             end
         end
         clock_in = ~clock_in;
-        #5;
+        #50;
+    end
+
+    repeat (200) begin
+        if(!data_in_full) begin
+            if(clock_in) begin // change data on negedge
+                if(data_in != 0) begin
+                    data_in = (data_in) + 1;
+                end
+                else begin
+                    data_in <= 1'b1;
+                end
+            end
+            else begin  
+            end
+        end
+        clock_in = ~clock_in;
+        #2;
+    end
+
+    repeat (200) begin
+        if(!data_in_full) begin
+            if(clock_in) begin // change data on negedge
+                if(data_in != 0) begin
+                    data_in = (data_in) + 1;
+                end
+                else begin
+                    data_in <= 1'b1;
+                end
+            end
+            else begin  
+            end
+        end
+        clock_in = ~clock_in;
+        #50;
+    end
+end
+
+// Sample data to compare with output
+always @(posedge clock_in or negedge rst_in_n) begin
+    if (!rst_in_n) begin
+
+    end
+    else if (data_in_valid && !data_in_full) begin
+        COMPARE[in_index] <= (data_in);
+        in_index <= in_index + 1;  
     end
 end
 
@@ -77,8 +119,44 @@ initial begin // data out
     clock_out = 1'b1;
 
 
+    repeat (200) begin
+        #1;
+        if (data_out_valid) begin
+            if(clock_out) begin
+                if (data_out == COMPARE[out_index]) begin
+                    $monitor("data match");
+                end
+                else begin
+                    $monitor("data missmatch: out_index: %d: %d != %d",out_index, COMPARE[out_index], data_out);      
+                end 
+            end
+            else begin
+                out_index = out_index + 1;
+            end
+        end
+        clock_out = ~clock_out;
+    end
+
+    repeat (120) begin
+        #25;
+        if (data_out_valid) begin
+            if(clock_out) begin
+                if (data_out == COMPARE[out_index]) begin
+                    $monitor("data match");
+                end
+                else begin
+                    $monitor("data missmatch: out_index: %d: %d != %d",out_index, COMPARE[out_index], data_out);      
+                end 
+            end
+            else begin
+                out_index = out_index + 1;
+            end
+        end
+        clock_out = ~clock_out;
+    end
+
     repeat (360) begin
-        #5;
+        #1;
         if (data_out_valid) begin
             if(clock_out) begin
                 if (data_out == COMPARE[out_index]) begin
