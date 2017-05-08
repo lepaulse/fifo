@@ -13,7 +13,7 @@
 `timescale 1ns/1ps
 
 module fifo #(parameter 
-                BUFFER_SIZE = 128,                
+                BUFFER_SIZE = 16,                
                 DATA_WIDTH = 32,    
                 ADDRESS_WIDTH = clogb2(BUFFER_SIZE) - 1
              )
@@ -82,15 +82,15 @@ module fifo #(parameter
     wire [ADDRESS_WIDTH:0] WriteNextAddress, ReadNextAddress; 
 
     // Gray coded Pointers for generating full/empty signals
-    reg [ADDRESS_WIDTH:0] WritePointer, ReadPointer;
+    reg [ADDRESS_WIDTH:0] WriteGrayPointer, ReadGrayPointer;
 
     // Gray coded Next Pointers for syncronizing across clock domains
     wire [ADDRESS_WIDTH:0] WriteGrayNextPointer, ReadGrayNextPointer;
 
     // Gray coded pointers for synchronizing accross clock domains
     // 2 registers used to avoid metastability
-    reg [ADDRESS_WIDTH:0] WritePointer2Read1, ReadPointer2Write1;
-    reg [ADDRESS_WIDTH:0] WritePointer2Read2, ReadPointer2Write2;
+    reg [ADDRESS_WIDTH:0] WriteGrayPointer2Read1, ReadGrayPointer2Write1;
+    reg [ADDRESS_WIDTH:0] WriteGrayPointer2Read2, ReadGrayPointer2Write2;
 
     // Wires to signal fifo status
     wire DataInFull, DataOutEmpty;
@@ -100,8 +100,8 @@ module fifo #(parameter
     // ----------------------------------------------------------------------------------
     // Check full condition
     assign DataInFull = (WriteGrayNextPointer ==
-                        {~ReadPointer2Write2[ADDRESS_WIDTH:ADDRESS_WIDTH-1]
-                         ,ReadPointer2Write2[ADDRESS_WIDTH-2:0]});
+                       {~ReadGrayPointer2Write2[ADDRESS_WIDTH:ADDRESS_WIDTH-1],
+                         ReadGrayPointer2Write2[ADDRESS_WIDTH-2:0]});
     // Remove MSB before memory indexing
     assign BufferWriteAddress = ExtendedBufferWriteAddress[ADDRESS_WIDTH-1:0];
     // Increase Write address if conditions are met
@@ -113,9 +113,9 @@ module fifo #(parameter
         if (!rst_in_n) begin
             data_in_full <= 1'b0;
             ExtendedBufferWriteAddress <= 0;
-            WritePointer <= 0;
-            WritePointer2Read1 <= 0;
-            WritePointer2Read2 <= 0;
+            WriteGrayPointer <= 0;
+            WriteGrayPointer2Read1 <= 0;
+            WriteGrayPointer2Read2 <= 0;
         end
         else begin
             // Update data in full register
@@ -123,10 +123,10 @@ module fifo #(parameter
             // Update Write adress register
             ExtendedBufferWriteAddress <= WriteNextAddress;
             // Update current Gray code writepointer
-            WritePointer <= WriteGrayNextPointer;
+            WriteGrayPointer <= WriteGrayNextPointer;
             // Send previous Gray code writepointer to Read side logic
-            WritePointer2Read1 <= WritePointer;
-            WritePointer2Read2 <= WritePointer2Read1;
+            WriteGrayPointer2Read1 <= WriteGrayPointer;
+            WriteGrayPointer2Read2 <= WriteGrayPointer2Read1;
         end
     end
 
@@ -134,7 +134,7 @@ module fifo #(parameter
     // Read side logic
     // ----------------------------------------------------------------------------------
     // Check empty condition
-    assign DataOutEmpty = (ReadGrayNextPointer==WritePointer2Read2);
+    assign DataOutEmpty = (ReadGrayNextPointer==WriteGrayPointer2Read2);
     // Remove MSB before memory indexing
     assign BufferReadAddress = ExtendedBufferReadAddress[ADDRESS_WIDTH-1:0];
     // Increase Read address if conditions are met
@@ -146,9 +146,9 @@ module fifo #(parameter
         if (!rst_out_n) begin
             data_out_valid <= 1'b0;
             ExtendedBufferReadAddress <= 0;
-            ReadPointer <= 0;
-            ReadPointer2Write1 <= 0;
-            ReadPointer2Write2 <= 0;
+            ReadGrayPointer <= 0;
+            ReadGrayPointer2Write1 <= 0;
+            ReadGrayPointer2Write2 <= 0;
         end
         else begin
             // Update data out valid register
@@ -156,10 +156,10 @@ module fifo #(parameter
             // Update Read adress register
             ExtendedBufferReadAddress <= ReadNextAddress;
             // Update current Gray code readpointer
-            ReadPointer <= ReadGrayNextPointer;
+            ReadGrayPointer <= ReadGrayNextPointer;
             // Send previous Gray code readpointer to Write side logic
-            ReadPointer2Write1 <= ReadPointer;
-            ReadPointer2Write2 <= ReadPointer2Write1;
+            ReadGrayPointer2Write1 <= ReadGrayPointer;
+            ReadGrayPointer2Write2 <= ReadGrayPointer2Write1;
         end
     end
 endmodule
