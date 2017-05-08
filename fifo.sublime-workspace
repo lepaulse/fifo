@@ -4,16 +4,24 @@
 		"selected_items":
 		[
 			[
+				"in",
+				"in_index"
+			],
+			[
+				"data",
+				"data_out"
+			],
+			[
+				"data_o",
+				"data_out_valid"
+			],
+			[
 				"cl",
 				"clock_in"
 			],
 			[
 				"Data",
 				"DataOutEmpty"
-			],
-			[
-				"data_o",
-				"data_out_ack"
 			],
 			[
 				"W",
@@ -42,10 +50,6 @@
 			[
 				"D",
 				"DataInFull"
-			],
-			[
-				"data",
-				"data_in_full"
 			],
 			[
 				"Rea",
@@ -99,7 +103,7 @@
 			"file": "fifo_tb.v",
 			"settings":
 			{
-				"buffer_size": 1625,
+				"buffer_size": 2302,
 				"encoding": "UTF-8",
 				"line_ending": "Windows"
 			}
@@ -126,7 +130,7 @@
 			"file": "fifo.v",
 			"settings":
 			{
-				"buffer_size": 6614,
+				"buffer_size": 6695,
 				"encoding": "UTF-8",
 				"line_ending": "Windows"
 			}
@@ -230,6 +234,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"readpointer",
+			"dffDQ",
+			"dff",
 			" WritePointer",
 			" ReadPointer",
 			" WritePointer",
@@ -263,6 +270,8 @@
 		"regex": false,
 		"replace_history":
 		[
+			"dffQD",
+			"dffDQ",
 			" GrayWritePointer",
 			" GrayReadPointer",
 			" GrayWritePointer",
@@ -302,15 +311,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1625,
+						"buffer_size": 2302,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								386,
-								386
+								2189,
+								2189
 							]
 						],
 						"settings":
@@ -318,7 +327,7 @@
 							"syntax": "Packages/Verilog/Verilog.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 594.0,
+						"translation.y": 756.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
@@ -377,7 +386,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 216.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
@@ -395,15 +404,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6614,
+						"buffer_size": 6695,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2106,
-								2106
+								259,
+								259
 							]
 						],
 						"settings":
@@ -411,7 +420,7 @@
 							"syntax": "Packages/Verilog/Verilog.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 864.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -448,7 +457,7 @@
 		"cols":
 		[
 			0.0,
-			0.330729166667,
+			0.5,
 			1.0
 		],
 		"rows":

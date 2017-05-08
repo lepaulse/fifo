@@ -1,6 +1,6 @@
 // **************************************************************************************
 // Asynchronous fifo    
-// TODO: last edit date                 
+// 08.05.17                
 // Norwegian University of Science and Technology              
 // Lars Erik Songe Paulsen             
 // **************************************************************************************
@@ -13,7 +13,7 @@
 `timescale 1ns/1ps
 
 module fifo #(parameter 
-                BUFFER_SIZE = 16,                
+                BUFFER_SIZE = 4,                
                 DATA_WIDTH = 32,    
                 ADDRESS_WIDTH = clogb2(BUFFER_SIZE) - 1
              )
@@ -90,7 +90,7 @@ module fifo #(parameter
     // Gray coded pointers for synchronizing accross clock domains
     reg [ADDRESS_WIDTH:0] WritePointer2Read1, ReadPointer2Write1;
 
-    // 
+    // Wires to signal fifo status
     wire DataInFull, DataOutEmpty;
 
     // ----------------------------------------------------------------------------------
