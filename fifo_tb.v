@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 module fifo_tb;
-parameter BUFFER_SIZE = 1048576;//128;
+parameter BUFFER_SIZE = 128;//128;
 parameter DATA_WIDTH = 32;
 
     // Data in interface

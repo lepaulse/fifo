@@ -13,7 +13,7 @@
 `timescale 1ns/1ps
 
 module fifo #(parameter 
-                BUFFER_SIZE = 1048576,                
+                BUFFER_SIZE = 128,                
                 DATA_WIDTH = 32,    
                 ADDRESS_WIDTH = clogb2(BUFFER_SIZE) - 1
              )
