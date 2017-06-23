@@ -1,3 +1,4 @@
+// Simple TestBench for asynchronous fifo
 `timescale 1ns/1ps
 
 module fifo_tb;
